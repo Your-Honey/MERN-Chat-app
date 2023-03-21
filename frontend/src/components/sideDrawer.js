@@ -27,6 +27,8 @@ import axios from "axios";
 import ChatLoading from "../components/chatLoading";
 import UserListItem from "./userListItem";
 import { getError } from "../utils";
+import NotificationBadge from "react-notification-badge";
+import { Effect } from "react-notification-badge";
 
 function SideDrawer() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -35,7 +37,7 @@ function SideDrawer() {
   const [loading, setLoading] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
   const {
-    state: { user, chats },
+    state: { user, chats, notification },
     dispatch: ctxDispatch,
   } = useContext(Store);
 
@@ -112,8 +114,33 @@ function SideDrawer() {
         <div>
           <Menu>
             <MenuButton p={1}>
+              <NotificationBadge
+                count={notification.length}
+                effect={Effect.SCALE}
+              />
               <BellIcon fontSize="2xl" m={1} />
             </MenuButton>
+            {notification.length > 0 ? (
+              <MenuList>
+                {notification.map((singleNotification, index) => (
+                  <MenuItem
+                    onClick={() => {
+                      ctxDispatch({
+                        type: "DELETE_NOTIFICATION",
+                        payload: singleNotification,
+                      });
+                      ctxDispatch({
+                        type: "SET_SELECTED_CHAT",
+                        payload: singleNotification.chat,
+                      });
+                    }}
+                    key={index}
+                  >
+                    New Message from {singleNotification.sender.name}
+                  </MenuItem>
+                ))}
+              </MenuList>
+            ) : null}
           </Menu>
           <Menu>
             <MenuButton as={Button} bg="white" rightIcon={<ChevronDownIcon />}>

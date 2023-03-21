@@ -36,5 +36,26 @@ const io = new Server(server, {
   pingTimeout: 60000,
   cors: {
     origin: "http://localhost:3000",
+    // credentials: true,
   },
+});
+
+io.on("connection", (socket) => {
+  console.log("Connected to socket .io");
+
+  socket.on("Join room", (room) => {
+    socket.join(room._id);
+    console.log("user Joined room ", room._id);
+  });
+
+  socket.on("New message", (data) => {
+    socket.to(data.selectedChat._id).emit("Receive message", data.data);
+  });
+
+  socket.on("typing", (room) => {
+    socket.to(room._id).emit("typing");
+  });
+  socket.on("Stop typing", (room) => {
+    socket.to(room._id).emit("Stop typing");
+  });
 });

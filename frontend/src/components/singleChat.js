@@ -16,18 +16,55 @@ import axios from "axios";
 import { getError } from "../utils";
 import { toast } from "react-toastify";
 import "./styles.css";
+import Lottie from "react-lottie";
 import ScrollableChat from "./scrollableChat";
+import io from "socket.io-client";
+import animationData from "../animations/typing.json";
+
+const ENDPOINT = "http://localhost:5000";
+var socket, selectedChatCopy;
 
 function SingleChat() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState(null);
   const { state, dispatch: ctxDispatch } = useContext(Store);
-  const { user, selectedChat } = state;
+  const { user, selectedChat, notification } = state;
+
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: animationData,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
 
   useEffect(() => {
     fetchMessages();
+    selectedChatCopy = selectedChat;
   }, [selectedChat]);
+
+  useEffect(() => {
+    socket = io(ENDPOINT);
+  }, []);
+
+  useEffect(() => {
+    socket.on("Receive message", (message) => {
+      if (selectedChatCopy?._id && message.chat._id === selectedChatCopy?._id) {
+        setMessages([...messages, message]);
+      } else {
+        if (!notification.includes(message)) {
+          ctxDispatch({ type: "SET_NOTIFICATION", payload: message });
+          ctxDispatch({ type: "SET_FETCH_CHAT" });
+        }
+      }
+    });
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("Stop typing", () => setIsTyping(false));
+  });
 
   const fetchMessages = async () => {
     if (!selectedChat) {
@@ -42,6 +79,7 @@ function SingleChat() {
       });
       setMessages(data);
       setLoading(false);
+      socket.emit("Join room", selectedChatCopy);
     } catch (err) {
       toast.error(getError(err));
       setLoading(false);
@@ -66,6 +104,8 @@ function SingleChat() {
         );
 
         setMessages([...messages, data]);
+        socket.emit("New message", { data, selectedChat });
+        socket.emit("Stop typing", selectedChatCopy);
       } catch (err) {
         toast.error(getError(err));
       }
@@ -74,6 +114,15 @@ function SingleChat() {
 
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
+    socket.emit("typing", selectedChatCopy);
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+    const timeLimit = 3000;
+    const timeout = setTimeout(() => {
+      socket.emit("Stop typing", selectedChatCopy);
+    }, timeLimit);
+    setTypingTimeout(timeout);
   };
 
   return selectedChat ? (
@@ -132,7 +181,20 @@ function SingleChat() {
             <ScrollableChat messages={messages}></ScrollableChat>
           </div>
         )}
+
         <FormControl onKeyDown={sendMessage} id="first-name" isRequired mt={3}>
+          {isTyping ? (
+            <div>
+              <Lottie
+                options={defaultOptions}
+                // height={50}
+                width={70}
+                style={{ marginBottom: 15, marginLeft: 0 }}
+              />
+            </div>
+          ) : (
+            <></>
+          )}
           <Input
             variant="filled"
             bg="#E0E0E0"

@@ -10,6 +10,7 @@ const initialState = {
   chats: [],
   selectedChat: null,
   fetchChatAgain: false,
+  notification: [],
 };
 
 const reducer = (state, action) => {
@@ -28,6 +29,18 @@ const reducer = (state, action) => {
 
     case "SET_FETCH_CHAT":
       return { ...state, fetchChatAgain: !state.fetchChatAgain };
+
+    case "SET_NOTIFICATION":
+      return {
+        ...state,
+        notification: [action.payload, ...state.notification],
+      };
+
+    case "DELETE_NOTIFICATION":
+      const notification = state.notification.reduce(
+        (singleNotification) => singleNotification._Id !== action.payload._id
+      );
+      return { ...state, notification };
 
     default:
       return state;
