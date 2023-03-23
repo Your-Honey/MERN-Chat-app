@@ -49,22 +49,31 @@ function SingleChat() {
 
   useEffect(() => {
     socket = io(ENDPOINT);
+    socket.emit("User Join", user);
+    socket.on("typing", (room) => {
+      if (room?._id === selectedChatCopy?._id) {
+        setIsTyping(true);
+      }
+    });
+
+    socket.on("Stop typing", () => setIsTyping(false));
   }, []);
 
   useEffect(() => {
     socket.on("Receive message", (message) => {
-      if (selectedChatCopy?._id && message.chat._id === selectedChatCopy?._id) {
-        setMessages([...messages, message]);
-      } else {
+      if (
+        !selectedChatCopy?._id ||
+        message.chat._id !== selectedChatCopy?._id
+      ) {
         if (!notification.includes(message)) {
           ctxDispatch({ type: "SET_NOTIFICATION", payload: message });
           ctxDispatch({ type: "SET_FETCH_CHAT" });
         }
+      } else {
+        setMessages([...messages, message]);
       }
     });
-    socket.on("typing", () => setIsTyping(true));
-    socket.on("Stop typing", () => setIsTyping(false));
-  });
+  }, [socket]);
 
   const fetchMessages = async () => {
     if (!selectedChat) {

@@ -48,14 +48,27 @@ io.on("connection", (socket) => {
     console.log("user Joined room ", room._id);
   });
 
-  socket.on("New message", (data) => {
-    socket.to(data.selectedChat._id).emit("Receive message", data.data);
+  socket.on("User Join", (user) => {
+    socket.join(user._id);
+  });
+
+  socket.on("New message", ({ data }) => {
+    data.chat.users.forEach((user) => {
+      if (user._id !== data.sender._id) {
+        socket.to(user._id).emit("Receive message", data);
+      }
+    });
   });
 
   socket.on("typing", (room) => {
-    socket.to(room._id).emit("typing");
+    socket.to(room._id).emit("typing", room);
   });
   socket.on("Stop typing", (room) => {
     socket.to(room._id).emit("Stop typing");
+  });
+
+  socket.off("setup", () => {
+    console.log("USER DISCONNECTED");
+    socket.leave(userData._id);
   });
 });
