@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import userRouter from "./routes/userRouter.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import chatRouter from "./routes/chatRouter.js";
+import notificationRouter from "./routes/notificationRouter.js";
 import messageRouter from "./routes/messageRouter.js";
 import { Server } from "socket.io";
 const app = express();
@@ -23,6 +24,7 @@ mongoose
 app.use("/api/user", userRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/message", messageRouter);
+app.use("/api/notification", notificationRouter);
 
 // Error Handling middlewares
 app.use(notFound);

@@ -115,12 +115,14 @@ function SideDrawer() {
           <Menu>
             <MenuButton p={1}>
               <NotificationBadge
-                count={notification.length}
+                count={
+                  notification && notification.length ? notification.length : 0
+                }
                 effect={Effect.SCALE}
               />
               <BellIcon fontSize="2xl" m={1} />
             </MenuButton>
-            {notification.length > 0 ? (
+            {notification && notification.length > 0 ? (
               <MenuList>
                 {notification.map((singleNotification, index) => (
                   <MenuItem
