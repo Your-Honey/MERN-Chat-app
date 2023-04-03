@@ -1,5 +1,4 @@
 import asyncHandler from "express-async-handler";
-import User from "../models/userModel.js";
 import Notification from "../models/notificationModel.js";
 import Chat from "../models/chatModel.js";
 
@@ -40,7 +39,7 @@ const accpetFirendRequest = asyncHandler(async (req, res) => {
   const notificationId = req.params.notificationId;
   try {
     const notification = await Notification.findById(notificationId);
-    console.log("notification<<<", notification);
+
     if (!notification) {
       return res.status(400).send("Not Found");
     }

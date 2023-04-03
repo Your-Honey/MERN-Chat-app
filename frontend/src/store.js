@@ -31,11 +31,16 @@ const reducer = (state, action) => {
       return { ...state, fetchChatAgain: !state.fetchChatAgain };
 
     case "SET_NOTIFICATION":
-      let updateNotification = state.notification;
-      if (!state.notification.some((n) => n._id === action.payload._id)) {
+      let updateNotification = state.notification || [];
+      if (
+        action.payload._id &&
+        !state.notification.some((n) => n._id === action.payload._id)
+      ) {
         updateNotification = [action.payload, ...state.notification];
       }
-      console.log(updateNotification);
+      if (action.payload.length > 0) {
+        updateNotification = [...action.payload, ...updateNotification];
+      }
       return {
         ...state,
         notification: updateNotification,

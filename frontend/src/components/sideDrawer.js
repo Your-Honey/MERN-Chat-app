@@ -19,16 +19,17 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Store } from "../store";
 import ProfileModal from "./profileModal";
 import { toast } from "react-toastify";
 import axios from "axios";
 import ChatLoading from "../components/chatLoading";
-import UserListItem from "./userListItem";
 import { getError } from "../utils";
 import NotificationBadge from "react-notification-badge";
 import { Effect } from "react-notification-badge";
+import Notification from "./notification";
+import SearchListItem from "./searchList";
 
 function SideDrawer() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -54,11 +55,15 @@ function SideDrawer() {
     }
     try {
       setLoading(true);
-      const { data } = await axios.get(`/api/user?search=${search}`, {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      });
+      const { data } = await axios.get(
+        `/api/user/searchWithRequest?search=${search}`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      console.log(data);
       setLoading(false);
       setSearchResult(data);
     } catch (err) {
@@ -88,6 +93,22 @@ function SideDrawer() {
       toast.error(err.message);
     }
   };
+
+  useEffect(() => {
+    const fetchRequestNotification = async () => {
+      try {
+        const { data } = await axios.get("/api/notification/", {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+        ctxDispatch({ type: "SET_NOTIFICATION", payload: data });
+      } catch (err) {
+        toast.error(getError(err));
+      }
+    };
+    fetchRequestNotification();
+  }, [ctxDispatch, user.token]);
 
   return (
     <>
@@ -124,23 +145,7 @@ function SideDrawer() {
             </MenuButton>
             {notification && notification.length > 0 ? (
               <MenuList>
-                {notification.map((singleNotification, index) => (
-                  <MenuItem
-                    onClick={() => {
-                      ctxDispatch({
-                        type: "DELETE_NOTIFICATION",
-                        payload: singleNotification,
-                      });
-                      ctxDispatch({
-                        type: "SET_SELECTED_CHAT",
-                        payload: singleNotification.chat,
-                      });
-                    }}
-                    key={index}
-                  >
-                    New Message from {singleNotification.sender.name}
-                  </MenuItem>
-                ))}
+                <Notification notification={notification} />
               </MenuList>
             ) : null}
           </Menu>
@@ -182,7 +187,7 @@ function SideDrawer() {
               <ChatLoading />
             ) : (
               searchResult?.map((user) => (
-                <UserListItem
+                <SearchListItem
                   key={user._id}
                   user={user}
                   handleFunction={() => accessChat(user._id)}

@@ -2,6 +2,8 @@ import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import generateToken from "../utils/genrateToken.js";
+import Chat from "../models/chatModel.js";
+import Notification from "../models/notificationModel.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, pic } = req.body;
@@ -70,4 +72,60 @@ const searchUser = asyncHandler(async (req, res) => {
   res.send(users);
 });
 
-export { registerUser, authUser, searchUser };
+const searchWithRequest = asyncHandler(async (req, res) => {
+  const senderId = req.user._id;
+  const keyword = req.query.search
+    ? {
+        $or: [
+          { name: { $regex: req.query.search, $options: "i" } },
+          { email: { $regex: req.query.search, $options: "i" } },
+        ],
+      }
+    : {};
+
+  const users = await User.find(keyword)
+    .find({ _id: { $ne: req.user._id } })
+    .lean();
+
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+    console.log(Object.keys(user));
+
+    const isChat = await Chat.find({
+      isGroupChat: false,
+      $and: [
+        { users: { $elemMatch: { $eq: user._id } } },
+        { users: { $elemMatch: { $eq: senderId } } },
+      ],
+    });
+
+    if (isChat.length > 0) {
+      user.relation = "friends";
+      continue;
+    }
+
+    const pendingRequest = await Notification.find({
+      receiver: user._id,
+      sender: senderId,
+    });
+    if (pendingRequest.length > 0) {
+      user.relation = "pending";
+      continue;
+    }
+
+    const recivedRequest = await Notification.find({
+      receiver: senderId,
+      sender: user._id,
+    });
+    if (recivedRequest.length > 0) {
+      user.relation = "Accept/Reject";
+      continue;
+    }
+
+    user.relation = "Add";
+  }
+
+  res.send(users);
+});
+
+export { registerUser, authUser, searchUser, searchWithRequest };
