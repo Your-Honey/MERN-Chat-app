@@ -23,7 +23,19 @@ const addFirendRequestNotification = asyncHandler(async (req, res) => {
   const sender = req.user._id;
   const receiver = req.body.receiver;
   try {
-    const groupChat = await Notification.create({
+    const isNotification = await Notification.findOne({
+      $or: [
+        { $and: [{ sender: receiver }, { receiver: sender }] },
+        { $and: [{ sender }, { receiver }] },
+      ],
+      type: "friend-request",
+    });
+
+    if (isNotification) {
+      return res.status(200).json("Already send or Check Notification");
+    }
+
+    const notification = await Notification.create({
       sender,
       receiver,
       type: "friend-request",
@@ -41,7 +53,7 @@ const accpetFirendRequest = asyncHandler(async (req, res) => {
     const notification = await Notification.findById(notificationId);
 
     if (!notification) {
-      return res.status(400).send("Not Found");
+      return res.status(400).send({ message: "Request Canceled by Sender" });
     }
     const newChat = await Chat.create({
       chatName: "sender",
@@ -63,8 +75,32 @@ const accpetFirendRequest = asyncHandler(async (req, res) => {
 const rejectFirendRequest = asyncHandler(async (req, res) => {
   const notificationId = req.params.notificationId;
   try {
-    await Notification.deleteOne({ _id: notificationId });
+    const notification = await Notification.findOne({ notificationId });
+    if (!notification) {
+      return res
+        .status(400)
+        .send({ message: "Request Already Canceled by Sender" });
+    }
+    await Notification.findByIdAndDelete({ _id: notificationId });
     res.status(200).send("Request Rejected");
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message);
+  }
+});
+
+const cancelFriendRequest = asyncHandler(async (req, res) => {
+  const sender = req.user._id;
+  const receiver = req.params.Id;
+  try {
+    const notification = await Notification.findOne({ sender, receiver });
+    if (!notification) {
+      return res
+        .status(400)
+        .send({ message: "Request Already Accepted or Rejected" });
+    }
+    await Notification.findOneAndDelete({ sender, receiver });
+    res.status(200).send("Request Canceled");
   } catch (error) {
     res.status(400);
     throw new Error(error.message);
@@ -76,4 +112,5 @@ export {
   addFirendRequestNotification,
   accpetFirendRequest,
   rejectFirendRequest,
+  cancelFriendRequest,
 };

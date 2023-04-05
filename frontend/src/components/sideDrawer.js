@@ -63,34 +63,11 @@ function SideDrawer() {
           },
         }
       );
-      console.log(data);
+
       setLoading(false);
       setSearchResult(data);
     } catch (err) {
       toast.error(getError(err));
-    }
-  };
-
-  const accessChat = async (userId) => {
-    try {
-      setLoadingChat(true);
-      const { data } = await axios.post(
-        "/api/chat/",
-        { userId },
-        {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        }
-      );
-      setLoadingChat(false);
-      if (!chats.find((chat) => chat._id === data._id)) {
-        ctxDispatch({ type: "SET_CHATS", payload: [data, ...chats] });
-      }
-      ctxDispatch({ type: "SET_SELECTED_CHAT", payload: data });
-      onClose();
-    } catch (err) {
-      toast.error(err.message);
     }
   };
 
@@ -189,8 +166,10 @@ function SideDrawer() {
               searchResult?.map((user) => (
                 <SearchListItem
                   key={user._id}
-                  user={user}
-                  handleFunction={() => accessChat(user._id)}
+                  searchUser={user}
+                  onClose={onClose}
+                  setLoadingChat={setLoadingChat}
+                  searchHandler={searchHandler}
                 />
               ))
             )}

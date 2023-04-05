@@ -100,7 +100,7 @@ const searchWithRequest = asyncHandler(async (req, res) => {
     });
 
     if (isChat.length > 0) {
-      user.relation = "friends";
+      user.relation = "Chat";
       continue;
     }
 
@@ -109,7 +109,7 @@ const searchWithRequest = asyncHandler(async (req, res) => {
       sender: senderId,
     });
     if (pendingRequest.length > 0) {
-      user.relation = "pending";
+      user.relation = "Cancel";
       continue;
     }
 

@@ -52,6 +52,7 @@ function Notification({ notification }) {
             Request from {singleNotification.sender.name}
             <Button
               colorScheme="teal"
+              size="xs"
               variant="ghost"
               onClick={() => acceptRequest(singleNotification)}
             >
@@ -59,6 +60,7 @@ function Notification({ notification }) {
             </Button>
             <Button
               isLoading={loading}
+              size="xs"
               variant="ghost"
               colorScheme="red"
               onClick={() => rejectRequest(singleNotification)}
