@@ -89,7 +89,6 @@ const searchWithRequest = asyncHandler(async (req, res) => {
 
   for (let i = 0; i < users.length; i++) {
     const user = users[i];
-    console.log(Object.keys(user));
 
     const isChat = await Chat.find({
       isGroupChat: false,

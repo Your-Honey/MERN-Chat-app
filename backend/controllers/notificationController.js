@@ -75,7 +75,7 @@ const accpetFirendRequest = asyncHandler(async (req, res) => {
 const rejectFirendRequest = asyncHandler(async (req, res) => {
   const notificationId = req.params.notificationId;
   try {
-    const notification = await Notification.findOne({ notificationId });
+    const notification = await Notification.findOne({ _id: notificationId });
     if (!notification) {
       return res
         .status(400)
